@@ -91,7 +91,7 @@
                 <div>
                     <h1 class="text-base font-bold text-slate-900 tracking-wide flex items-center gap-2">
                         串亭 読み上げトレーナー
-                        <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium border border-slate-200">VER 2.0</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium border border-slate-200">VER 2.1</span>
                     </h1>
                     <p class="text-xs text-slate-500 hidden sm:block">Kitchen Dispatch & Voice Practice System</p>
                 </div>
@@ -101,6 +101,9 @@
             <nav class="flex space-x-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs sm:text-sm">
                 <button id="nav-practice" onclick="switchTab('practice')" class="px-3 py-1.5 rounded-md font-medium transition-all active-tab">
                     実践練習
+                </button>
+                <button id="nav-wasabi" onclick="switchTab('wasabi')" class="px-3 py-1.5 rounded-md font-medium transition-all inactive-tab">
+                    わさび有無判定
                 </button>
                 <button id="nav-quiz" onclick="switchTab('quiz')" class="px-3 py-1.5 rounded-md font-medium transition-all inactive-tab">
                     確認テスト
@@ -311,7 +314,55 @@
             </div>
         </section>
 
-        <!-- ================= PAGE 2: INTERACTIVE QUIZ MODE ================= -->
+        <!-- ================= PAGE 2: WASABI PRACTICE MODE ================= -->
+        <section id="tab-wasabi" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
+                <!-- Header -->
+                <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">
+                            わさび有無 判定トレーニング
+                        </h2>
+                        <p class="text-xs text-slate-500">表示された寿司ネタ・メニューに「わさび」が入っているか答えてください。</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-500">正解率</span>
+                        <div id="wasabi-score" class="text-lg font-bold text-slate-900 font-mono">0 / 0</div>
+                    </div>
+                </div>
+
+                <!-- Question Box -->
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-8 text-center space-y-2">
+                    <span class="text-[11px] px-2.5 py-0.5 rounded bg-slate-200 text-slate-700 font-medium">寿司メニュー</span>
+                    <div id="wasabi-dish-name" class="text-2xl font-bold text-slate-900 tracking-wide">
+                        -- 読み込み中 --
+                    </div>
+                </div>
+
+                <!-- Answer Options -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button onclick="checkWasabiAnswer(true)" class="wasabi-opt-btn p-5 rounded-xl border-2 border-slate-200 bg-white hover:border-emerald-600 hover:bg-emerald-50/30 text-center transition-all">
+                        <div class="text-sm font-bold text-emerald-700 mb-1">わさび入り (あり)</div>
+                        <div class="text-xs text-slate-500">With Wasabi</div>
+                    </button>
+                    
+                    <button onclick="checkWasabiAnswer(false)" class="wasabi-opt-btn p-5 rounded-xl border-2 border-slate-200 bg-white hover:border-rose-600 hover:bg-rose-50/30 text-center transition-all">
+                        <div class="text-sm font-bold text-rose-700 mb-1">わさび抜き (なし)</div>
+                        <div class="text-xs text-slate-500">Without Wasabi</div>
+                    </button>
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="wasabi-feedback" class="hidden p-3.5 rounded-lg text-center font-bold text-xs sm:text-sm"></div>
+
+                <!-- Next Button -->
+                <button id="wasabi-next-btn" onclick="nextWasabiQuestion()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-lg transition-all hidden">
+                    次の問題へ
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: INTERACTIVE QUIZ MODE ================= -->
         <section id="tab-quiz" class="hidden space-y-6 max-w-3xl mx-auto">
             <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
                 <!-- Quiz Header -->
@@ -379,7 +430,7 @@
             </div>
         </section>
 
-        <!-- ================= PAGE 3: DICTIONARY LOOKUP ================= -->
+        <!-- ================= PAGE 4: DICTIONARY LOOKUP ================= -->
         <section id="tab-dictionary" class="hidden space-y-4">
             <!-- Search & Filter Bar -->
             <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-center shadow-sm">
@@ -427,6 +478,48 @@
         // Complete 112 Dataset embedded
         const DATASET = [{"d":"Menu B","s":"焼き場・キッチン"},{"d":"Menu C","s":"全ポジション"},{"d":"Menu DELUXE","s":"全ポジション"},{"d":"和サラ Full / Half","s":"キッチン"},{"d":"魚サラ Full / Half","s":"板場・キッチン"},{"d":"わかめサラダ","s":"キッチン"},{"d":"ほうごま","s":"キッチン"},{"d":"キムチ","s":"キッチン"},{"d":"えだまめ","s":"キッチン"},{"d":"男えだ","s":"キッチン"},{"d":"ギョーザ","s":"キッチン"},{"d":"ミニギョー","s":"キッチン"},{"d":"ベジギョー","s":"キッチン"},{"d":"ミニベジ","s":"キッチン"},{"d":"たこ焼き","s":"キッチン"},{"d":"だし巻き","s":"キッチン"},{"d":"たこ酢","s":"板場"},{"d":"天盛り","s":"キッチン"},{"d":"ベジ天盛り","s":"キッチン"},{"d":"黒酢とりから","s":"キッチン"},{"d":"とりから","s":"キッチン"},{"d":"なすでん","s":"キッチン"},{"d":"カキフライ","s":"キッチン"},{"d":"イカゲソ","s":"キッチン"},{"d":"６本盛り","s":"焼き場"},{"d":"海鮮串","s":"焼き場"},{"d":"１０本盛り","s":"焼き場"},{"d":"手羽先","s":"焼き場"},{"d":"牛フィレ","s":"焼き場"},{"d":"カルビ","s":"焼き場"},{"d":"あいがも","s":"焼き場"},{"d":"つくね","s":"焼き場"},{"d":"やきとり","s":"焼き場"},{"d":"ししとう","s":"焼き場"},{"d":"しいたけ","s":"焼き場"},{"d":"茄子串","s":"焼き場"},{"d":"帆立串","s":"焼き場"},{"d":"海老串","s":"焼き場"},{"d":"鮭串","s":"焼き場"},{"d":"いか串","s":"焼き場"},{"d":"和牛 大 / 小","s":"焼き場・キッチン"},{"d":"とりてり 単 / とり塩 単","s":"焼き場"},{"d":"かば焼き Full / Half","s":"焼き場"},{"d":"さば塩","s":"焼き場"},{"d":"さけてり 単","s":"焼き場"},{"d":"特ずし","s":"板場"},{"d":"すし上 Full / Half","s":"板場"},{"d":"すし並","s":"板場"},{"d":"刺し盛り","s":"板場"},{"d":"３種刺し","s":"板場"},{"d":"２種刺し","s":"板場"},{"d":"トロ刺し","s":"板場"},{"d":"中トロ刺し","s":"板場"},{"d":"マグロ刺し","s":"板場"},{"d":"鮭刺し","s":"板場"},{"d":"まぐろN","s":"板場"},{"d":"中トロN","s":"板場"},{"d":"トロN","s":"板場"},{"d":"炙りトロN","s":"板場"},{"d":"さけN","s":"板場"},{"d":"トロサーモンN","s":"板場"},{"d":"炙り鮭N","s":"板場"},{"d":"炙りトロサーモンN","s":"板場"},{"d":"鮭いくら軍","s":"板場"},{"d":"うなぎN","s":"板場"},{"d":"うに軍","s":"板場"},{"d":"えびN","s":"板場"},{"d":"大海老N","s":"板場"},{"d":"はまちN","s":"板場"},{"d":"炙り帆立N","s":"板場"},{"d":"しめ鯖N","s":"板場"},{"d":"玉子N","s":"板場"},{"d":"炙りトロサーモンいくらR","s":"板場"},{"d":"さば棒","s":"板場"},{"d":"カリフォR","s":"板場"},{"d":"鮭アボR","s":"板場"},{"d":"スパツナR","s":"板場"},{"d":"スパ鮭R","s":"板場"},{"d":"てっかR","s":"板場"},{"d":"さけR","s":"板場"},{"d":"ネギトロR","s":"板場"},{"d":"トロサーモンR","s":"板場"},{"d":"うなたまR","s":"板場"},{"d":"かっぱR","s":"板場"},{"d":"アボR","s":"板場"},{"d":"かんぴょうR","s":"板場"},{"d":"おしんこR","s":"板場"},{"d":"梅きゅうR","s":"板場"},{"d":"納豆R","s":"板場"},{"d":"串丼","s":"焼き場・キッチン"},{"d":"牛カルビ丼","s":"焼き場・キッチン"},{"d":"うな丼 Full / Half","s":"焼き場・キッチン"},{"d":"さけ丼","s":"板場・キッチン"},{"d":"海老天丼","s":"キッチン"},{"d":"ベジ天丼","s":"キッチン"},{"d":"カツカレー","s":"キッチン"},{"d":"カラシビ","s":"キッチン"},{"d":"とんこつ","s":"キッチン"},{"d":"オムソバ","s":"キッチン"},{"d":"ベジオムソバ","s":"キッチン"},{"d":"味噌ラーメン","s":"キッチン"},{"d":"辛味噌ラーメン","s":"キッチン"},{"d":"海老天うどん","s":"キッチン"},{"d":"かき揚げうどん","s":"キッチン"},{"d":"デザート盛り","s":"キッチン"},{"d":"黒ゴマ","s":"キッチン"},{"d":"くろみつ","s":"キッチン"},{"d":"だんご","s":"キッチン"},{"d":"苺大福","s":"キッチン"},{"d":"抹茶アイス","s":"キッチン"},{"d":"マンゴー","s":"キッチン"},{"d":"バニラアイス","s":"キッチン"}];
 
+        // Wasabi Dataset sourced from sabi.xlsx (true = with wasabi, false = without wasabi)
+        const WASABI_DATASET = [
+            { d: "特ずし", hasWasabi: true },
+            { d: "すし上", hasWasabi: true },
+            { d: "すし並", hasWasabi: true },
+            { d: "まぐろN", hasWasabi: true },
+            { d: "中トロN", hasWasabi: true },
+            { d: "トロN", hasWasabi: true },
+            { d: "炙りトロN", hasWasabi: true },
+            { d: "さけN", hasWasabi: true },
+            { d: "トロサーモンN", hasWasabi: true },
+            { d: "炙り鮭N", hasWasabi: true },
+            { d: "炙りトロサーモンN", hasWasabi: true },
+            { d: "鮭いくら軍", hasWasabi: false },
+            { d: "うなぎN", hasWasabi: true },
+            { d: "うに軍", hasWasabi: false },
+            { d: "えびN", hasWasabi: true },
+            { d: "大海老N", hasWasabi: true },
+            { d: "はまちN", hasWasabi: true },
+            { d: "炙り帆立N", hasWasabi: true },
+            { d: "しめ鯖N", hasWasabi: true },
+            { d: "玉子N", hasWasabi: false },
+            { d: "炙りトロサーモンいくらR", hasWasabi: false },
+            { d: "さば棒", hasWasabi: false },
+            { d: "カリフォR", hasWasabi: false },
+            { d: "鮭アボR", hasWasabi: false },
+            { d: "スパツナR", hasWasabi: false },
+            { d: "スパ鮭R", hasWasabi: false },
+            { d: "てっかR", hasWasabi: true },
+            { d: "さけR", hasWasabi: true },
+            { d: "ネギトロR", hasWasabi: true },
+            { d: "トロサーモンR", hasWasabi: false },
+            { d: "うなたまR", hasWasabi: false },
+            { d: "かっぱR", hasWasabi: true },
+            { d: "アボR", hasWasabi: false },
+            { d: "かんぴょうR", hasWasabi: false },
+            { d: "おしんこR", hasWasabi: false },
+            { d: "梅きゅうR", hasWasabi: false },
+            { d: "納豆R", hasWasabi: false },
+            { d: "さけ丼", hasWasabi: true }
+        ];
+
         // Japanese Voice Pronunciation Counter Map
         const COUNTER_JA = ["", "一丁", "二丁", "三丁", "四丁", "五丁", "六丁", "七丁", "八丁", "九丁", "十丁"];
 
@@ -436,6 +529,8 @@
         let dictFilter = 'ALL';
         let quizCurrentDish = null;
         let quizScore = { correct: 0, total: 0 };
+        let wasabiCurrentItem = null;
+        let wasabiScore = { correct: 0, total: 0 };
         let timerInterval = null;
         let timerSeconds = 0;
 
@@ -443,15 +538,18 @@
             generateNewOrder();
             renderDictionary();
             initQuiz();
+            initWasabiQuiz();
         };
 
         // Navigation Switcher
         function switchTab(tabId) {
             document.getElementById('tab-practice').classList.add('hidden');
+            document.getElementById('tab-wasabi').classList.add('hidden');
             document.getElementById('tab-quiz').classList.add('hidden');
             document.getElementById('tab-dictionary').classList.add('hidden');
 
             document.getElementById('nav-practice').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
+            document.getElementById('nav-wasabi').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
             document.getElementById('nav-quiz').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
             document.getElementById('nav-dictionary').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
 
@@ -556,10 +654,8 @@
                 const badgeEl = document.getElementById('badge-' + st);
 
                 if (st === targetStation) {
-                    // Toggle targeted station
                     slipStates[st] = !slipStates[st];
                 } else {
-                    // Hide all others
                     slipStates[st] = false;
                 }
 
@@ -638,6 +734,49 @@
             const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
             const secs = String(timerSeconds % 60).padStart(2, '0');
             document.getElementById('stopwatch-display').innerText = `${mins}:${secs}`;
+        }
+
+        // --- WASABI PRACTICE MODE LOGIC ---
+        function initWasabiQuiz() {
+            nextWasabiQuestion();
+        }
+
+        function nextWasabiQuestion() {
+            document.getElementById('wasabi-feedback').classList.add('hidden');
+            document.getElementById('wasabi-next-btn').classList.add('hidden');
+
+            wasabiCurrentItem = WASABI_DATASET[Math.floor(Math.random() * WASABI_DATASET.length)];
+            document.getElementById('wasabi-dish-name').innerText = wasabiCurrentItem.d;
+
+            document.querySelectorAll('.wasabi-opt-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            });
+        }
+
+        function checkWasabiAnswer(userAnswer) {
+            wasabiScore.total++;
+            const isCorrect = (userAnswer === wasabiCurrentItem.hasWasabi);
+
+            if (isCorrect) wasabiScore.correct++;
+
+            document.getElementById('wasabi-score').innerText = `${wasabiScore.correct} / ${wasabiScore.total}`;
+
+            const fb = document.getElementById('wasabi-feedback');
+            fb.classList.remove('hidden');
+
+            const actualText = wasabiCurrentItem.hasWasabi ? "わさび入り（あり）" : "わさび抜き（なし）";
+
+            if (isCorrect) {
+                fb.className = "p-3.5 rounded-lg text-center font-bold text-xs sm:text-sm bg-emerald-50 text-emerald-800 border border-emerald-200";
+                fb.innerText = `正解です！ ${wasabiCurrentItem.d} は【${actualText}】です。`;
+            } else {
+                fb.className = "p-3.5 rounded-lg text-center font-bold text-xs sm:text-sm bg-rose-50 text-rose-800 border border-rose-200";
+                fb.innerText = `不正解です。 ${wasabiCurrentItem.d} は【${actualText}】です。`;
+            }
+
+            document.querySelectorAll('.wasabi-opt-btn').forEach(btn => btn.disabled = true);
+            document.getElementById('wasabi-next-btn').classList.remove('hidden');
         }
 
         // --- QUIZ LOGIC ---

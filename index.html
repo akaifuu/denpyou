@@ -558,17 +558,24 @@
         }
 
         // --- DRILL / PRACTICE LOGIC ---
+        // --- DRILL / PRACTICE LOGIC ---
         function generateNewOrder() {
             const count = parseInt(document.getElementById('item-count').value, 10);
             const filter = document.getElementById('station-filter').value;
             
-            let pool = DATASET;
-            if (filter === '焼き場') pool = DATASET.filter(i => i.s.includes('焼き場'));
-            else if (filter === '板場') pool = DATASET.filter(i => i.s.includes('板場'));
-            else if (filter === 'キッチン') pool = DATASET.filter(i => i.s.includes('キッチン'));
-            else if (filter === 'MULTI') pool = DATASET.filter(i => i.s.includes('・') || i.s === '全ポジション');
+            // デザートのメニュー名リスト
+            const desserts = ["デザート盛り", "黒ゴマ", "くろみつ", "だんご", "苺大福", "抹茶アイス", "マンゴー", "バニラアイス"];
 
-            if (pool.length === 0) pool = DATASET;
+            // デザートを除外したデータプールを作成
+            let pool = DATASET.filter(item => !desserts.includes(item.d));
+
+            // ポジション絞り込みの適用
+            if (filter === '焼き場') pool = pool.filter(i => i.s.includes('焼き場'));
+            else if (filter === '板場') pool = pool.filter(i => i.s.includes('板場'));
+            else if (filter === 'キッチン') pool = pool.filter(i => i.s.includes('キッチン'));
+            else if (filter === 'MULTI') pool = pool.filter(i => i.s.includes('・') || i.s === '全ポジション');
+
+            if (pool.length === 0) pool = DATASET.filter(item => !desserts.includes(item.d));
 
             currentOrder = [];
             for (let i = 0; i < count; i++) {

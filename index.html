@@ -77,6 +77,20 @@
             color: #0f172a;
             background-color: #f1f5f9;
         }
+
+        /* Drag and Drop Visual Styles */
+        .draggable-tag {
+            cursor: grab;
+            user-select: none;
+        }
+        .draggable-tag:active {
+            cursor: grabbing;
+        }
+        .drop-target-hover {
+            background-color: #f1f5f9 !important;
+            border-color: #0f172a !important;
+            border-style: dashed !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-slate-200 selection:text-slate-900">
@@ -91,14 +105,14 @@
                 <div>
                     <h1 class="text-base font-bold text-slate-900 tracking-wide flex items-center gap-2">
                         串亭 読み上げトレーナー
-                        <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium border border-slate-200">VER 2.1</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium border border-slate-200">VER 2.6</span>
                     </h1>
                     <p class="text-xs text-slate-500 hidden sm:block">Kitchen Dispatch & Voice Practice System</p>
                 </div>
             </div>
 
             <!-- Tab Switcher -->
-            <nav class="flex space-x-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs sm:text-sm">
+            <nav class="flex space-x-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs sm:text-sm overflow-x-auto">
                 <button id="nav-practice" onclick="switchTab('practice')" class="px-3 py-1.5 rounded-md font-medium transition-all active-tab">
                     実践練習
                 </button>
@@ -108,8 +122,11 @@
                 <button id="nav-quiz" onclick="switchTab('quiz')" class="px-3 py-1.5 rounded-md font-medium transition-all inactive-tab">
                     確認テスト
                 </button>
+                <button id="nav-gallery" onclick="switchTab('gallery')" class="px-3 py-1.5 rounded-md font-medium transition-all inactive-tab">
+                    画像モード
+                </button>
                 <button id="nav-dictionary" onclick="switchTab('dictionary')" class="px-3 py-1.5 rounded-md font-medium transition-all inactive-tab">
-                    全料理一覧 (112品)
+                    全料理一覧 (125品)
                 </button>
             </nav>
         </div>
@@ -183,9 +200,31 @@
                             </div>
                         </div>
 
+                        <!-- Draggable Tags Bar -->
+                        <div class="mb-3 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="text-[10px] font-bold text-slate-500 mb-1.5 flex justify-between items-center">
+                                <span>ドラッグ用タグ (商品へドロップ):</span>
+                                <button onclick="clearAllTags()" class="text-[10px] text-slate-400 hover:text-slate-700 underline">リセット</button>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <div draggable="true" ondragstart="handleDragStart(event)" data-tag="前" class="draggable-tag px-2 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded text-xs font-bold shadow-xs">
+                                    前
+                                </div>
+                                <div draggable="true" ondragstart="handleDragStart(event)" data-tag="板声" class="draggable-tag px-2 py-1 bg-cyan-100 text-cyan-900 border border-cyan-300 rounded text-xs font-bold shadow-xs">
+                                    板声
+                                </div>
+                                <div draggable="true" ondragstart="handleDragStart(event)" data-tag="声" class="draggable-tag px-2 py-1 bg-rose-100 text-rose-900 border border-rose-300 rounded text-xs font-bold shadow-xs">
+                                    声
+                                </div>
+                                <div draggable="true" ondragstart="handleDragStart(event)" data-tag="出してOK!" class="draggable-tag px-2 py-1 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded text-xs font-bold shadow-xs">
+                                    出してOK!
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Order List -->
                         <div class="space-y-3 min-h-[220px]">
-                            <div class="text-xs text-slate-500 font-medium">マスター注文内容</div>
+                            <div class="text-xs text-slate-500 font-medium">マスター注文内容（タグをドロップ可能）</div>
                             <ul id="handy-items-list" class="space-y-2">
                                 <!-- Populated dynamically -->
                             </ul>
@@ -203,7 +242,7 @@
                     <!-- Instruction Card -->
                     <div class="bg-slate-100 border border-slate-200 p-4 rounded-xl text-xs text-slate-600 space-y-2">
                         <div class="font-bold text-slate-800">操作手順</div>
-                        <p>1. ハンディの注文を見て、各ポジションの伝票出力を頭で確認します。</p>
+                        <p>1. 上部のタグ（前・板声・声・出してOK!）をハンディの各商品枠へドラッグ＆ドロップして配置できます。</p>
                         <p>2. 確認したい調理場の伝票をクリックすると、その伝票のみぼかしが解除されます。</p>
                     </div>
                 </div>
@@ -430,7 +469,55 @@
             </div>
         </section>
 
-        <!-- ================= PAGE 4: DICTIONARY LOOKUP ================= -->
+        <!-- ================= PAGE 4: IMAGE GALLERY MODE ================= -->
+        <section id="tab-gallery" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
+                <!-- Header & Controls -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-4 gap-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">
+                            メニュー画像ランダム表示
+                        </h2>
+                        <p class="text-xs text-slate-500">フォルダを選択して「ランダム表示」ボタンを押してください。</p>
+                    </div>
+                    <!-- Folder Checkboxes -->
+                    <div class="flex flex-wrap gap-4 text-xs font-bold text-slate-700">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="chk-all_menu" checked class="w-4 h-4 accent-slate-900 rounded">
+                            <span>すべて (117枚)</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="chk-kushis" checked class="w-4 h-4 accent-slate-900 rounded">
+                            <span>串 (6枚)</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="chk-sushis" checked class="w-4 h-4 accent-slate-900 rounded">
+                            <span>寿 (6枚)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Image Display Area (Fixed Height to prevent jumping) -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center h-[420px] relative overflow-hidden">
+                    <img id="gallery-img" src="" alt="Menu Image" class="hidden h-full w-full object-contain rounded-lg shadow-sm">
+                    <div id="gallery-placeholder" class="text-slate-400 text-xs sm:text-sm font-medium absolute">
+                        「ランダム表示」ボタンを押すと画像が表示されます
+                    </div>
+                </div>
+
+                <!-- Footer Info and Action Button -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                    <div id="gallery-info" class="text-xs font-mono font-semibold text-slate-500">
+                        がんばれー
+                    </div>
+                    <button onclick="displayRandomImage()" class="w-full sm:w-auto py-2.5 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm transition-all text-center">
+                        ランダム表示
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 5: DICTIONARY LOOKUP ================= -->
         <section id="tab-dictionary" class="hidden space-y-4">
             <!-- Search & Filter Bar -->
             <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-center shadow-sm">
@@ -439,7 +526,7 @@
                 </div>
 
                 <div class="flex gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 text-xs">
-                    <button onclick="setDictFilter('ALL')" class="dict-filter-btn px-3 py-1.5 rounded-md font-bold bg-slate-900 text-white">全て (112)</button>
+                    <button onclick="setDictFilter('ALL')" class="dict-filter-btn px-3 py-1.5 rounded-md font-bold bg-slate-900 text-white">全て (125)</button>
                     <button onclick="setDictFilter('焼き場')" class="dict-filter-btn px-3 py-1.5 rounded-md font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">焼き場</button>
                     <button onclick="setDictFilter('板場')" class="dict-filter-btn px-3 py-1.5 rounded-md font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">板場</button>
                     <button onclick="setDictFilter('キッチン')" class="dict-filter-btn px-3 py-1.5 rounded-md font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">キッチン</button>
@@ -475,8 +562,8 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // Complete 112 Dataset embedded
-        const DATASET = [{"d":"Menu B","s":"焼き場・キッチン"},{"d":"Menu C","s":"全ポジション"},{"d":"Menu DELUXE","s":"全ポジション"},{"d":"和サラ Full / Half","s":"キッチン"},{"d":"魚サラ Full / Half","s":"板場・キッチン"},{"d":"わかめサラダ","s":"キッチン"},{"d":"ほうごま","s":"キッチン"},{"d":"キムチ","s":"キッチン"},{"d":"えだまめ","s":"キッチン"},{"d":"男えだ","s":"キッチン"},{"d":"ギョーザ","s":"キッチン"},{"d":"ミニギョー","s":"キッチン"},{"d":"ベジギョー","s":"キッチン"},{"d":"ミニベジ","s":"キッチン"},{"d":"たこ焼き","s":"キッチン"},{"d":"だし巻き","s":"キッチン"},{"d":"たこ酢","s":"板場"},{"d":"天盛り","s":"キッチン"},{"d":"ベジ天盛り","s":"キッチン"},{"d":"黒酢とりから","s":"キッチン"},{"d":"とりから","s":"キッチン"},{"d":"なすでん","s":"キッチン"},{"d":"カキフライ","s":"キッチン"},{"d":"イカゲソ","s":"キッチン"},{"d":"６本盛り","s":"焼き場"},{"d":"海鮮串","s":"焼き場"},{"d":"１０本盛り","s":"焼き場"},{"d":"手羽先","s":"焼き場"},{"d":"牛フィレ","s":"焼き場"},{"d":"カルビ","s":"焼き場"},{"d":"あいがも","s":"焼き場"},{"d":"つくね","s":"焼き場"},{"d":"やきとり","s":"焼き場"},{"d":"ししとう","s":"焼き場"},{"d":"しいたけ","s":"焼き場"},{"d":"茄子串","s":"焼き場"},{"d":"帆立串","s":"焼き場"},{"d":"海老串","s":"焼き場"},{"d":"鮭串","s":"焼き場"},{"d":"いか串","s":"焼き場"},{"d":"和牛 大 / 小","s":"焼き場・キッチン"},{"d":"とりてり 単 / とり塩 単","s":"焼き場"},{"d":"かば焼き Full / Half","s":"焼き場"},{"d":"さば塩","s":"焼き場"},{"d":"さけてり 単","s":"焼き場"},{"d":"特ずし","s":"板場"},{"d":"すし上 Full / Half","s":"板場"},{"d":"すし並","s":"板場"},{"d":"刺し盛り","s":"板場"},{"d":"３種刺し","s":"板場"},{"d":"２種刺し","s":"板場"},{"d":"トロ刺し","s":"板場"},{"d":"中トロ刺し","s":"板場"},{"d":"マグロ刺し","s":"板場"},{"d":"鮭刺し","s":"板場"},{"d":"まぐろN","s":"板場"},{"d":"中トロN","s":"板場"},{"d":"トロN","s":"板場"},{"d":"炙りトロN","s":"板場"},{"d":"さけN","s":"板場"},{"d":"トロサーモンN","s":"板場"},{"d":"炙り鮭N","s":"板場"},{"d":"炙りトロサーモンN","s":"板場"},{"d":"鮭いくら軍","s":"板場"},{"d":"うなぎN","s":"板場"},{"d":"うに軍","s":"板場"},{"d":"えびN","s":"板場"},{"d":"大海老N","s":"板場"},{"d":"はまちN","s":"板場"},{"d":"炙り帆立N","s":"板場"},{"d":"しめ鯖N","s":"板場"},{"d":"玉子N","s":"板場"},{"d":"炙りトロサーモンいくらR","s":"板場"},{"d":"さば棒","s":"板場"},{"d":"カリフォR","s":"板場"},{"d":"鮭アボR","s":"板場"},{"d":"スパツナR","s":"板場"},{"d":"スパ鮭R","s":"板場"},{"d":"てっかR","s":"板場"},{"d":"さけR","s":"板場"},{"d":"ネギトロR","s":"板場"},{"d":"トロサーモンR","s":"板場"},{"d":"うなたまR","s":"板場"},{"d":"かっぱR","s":"板場"},{"d":"アボR","s":"板場"},{"d":"かんぴょうR","s":"板場"},{"d":"おしんこR","s":"板場"},{"d":"梅きゅうR","s":"板場"},{"d":"納豆R","s":"板場"},{"d":"串丼","s":"焼き場・キッチン"},{"d":"牛カルビ丼","s":"焼き場・キッチン"},{"d":"うな丼 Full / Half","s":"焼き場・キッチン"},{"d":"さけ丼","s":"板場・キッチン"},{"d":"海老天丼","s":"キッチン"},{"d":"ベジ天丼","s":"キッチン"},{"d":"カツカレー","s":"キッチン"},{"d":"カラシビ","s":"キッチン"},{"d":"とんこつ","s":"キッチン"},{"d":"オムソバ","s":"キッチン"},{"d":"ベジオムソバ","s":"キッチン"},{"d":"味噌ラーメン","s":"キッチン"},{"d":"辛味噌ラーメン","s":"キッチン"},{"d":"海老天うどん","s":"キッチン"},{"d":"かき揚げうどん","s":"キッチン"},{"d":"デザート盛り","s":"キッチン"},{"d":"黒ゴマ","s":"キッチン"},{"d":"くろみつ","s":"キッチン"},{"d":"だんご","s":"キッチン"},{"d":"苺大福","s":"キッチン"},{"d":"抹茶アイス","s":"キッチン"},{"d":"マンゴー","s":"キッチン"},{"d":"バニラアイス","s":"キッチン"}];
+        // Complete 125 Dataset updated from Excel
+        const DATASET = [{"d": "Menu A", "s": "板場・キッチン"}, {"d": "Menu B", "s": "焼き場・キッチン"}, {"d": "Menu C", "s": "全ポジション"}, {"d": "Menu DELUXE", "s": "全ポジション"}, {"d": "和サラ Full / Half", "s": "キッチン"}, {"d": "魚サラ Full / Half", "s": "板場・キッチン"}, {"d": "わかめサラダ", "s": "キッチン"}, {"d": "ほうごま", "s": "キッチン"}, {"d": "キムチ", "s": "キッチン"}, {"d": "えだまめ", "s": "キッチン"}, {"d": "男えだ", "s": "キッチン"}, {"d": "ギョーザ", "s": "キッチン"}, {"d": "ミニギョー", "s": "キッチン"}, {"d": "ベジギョー", "s": "キッチン"}, {"d": "ミニベジ", "s": "キッチン"}, {"d": "たこ焼き", "s": "キッチン"}, {"d": "だし巻き", "s": "キッチン"}, {"d": "たこ酢", "s": "板場"}, {"d": "天盛り", "s": "キッチン"}, {"d": "ベジ天盛り", "s": "キッチン"}, {"d": "黒酢とりから", "s": "キッチン"}, {"d": "とりから", "s": "キッチン"}, {"d": "なすでん", "s": "キッチン"}, {"d": "カキフライ", "s": "キッチン"}, {"d": "ゲソから", "s": "キッチン"}, {"d": "６本盛り", "s": "焼き場"}, {"d": "海鮮串", "s": "焼き場"}, {"d": "１０本盛り", "s": "焼き場"}, {"d": "手羽先", "s": "焼き場"}, {"d": "牛フィレ", "s": "焼き場"}, {"d": "カルビ", "s": "焼き場"}, {"d": "あいがも", "s": "焼き場"}, {"d": "つくね", "s": "焼き場"}, {"d": "やきとり", "s": "焼き場"}, {"d": "ししとう", "s": "焼き場"}, {"d": "しいたけ", "s": "焼き場"}, {"d": "茄子串", "s": "焼き場"}, {"d": "帆立串", "s": "焼き場"}, {"d": "海老串", "s": "焼き場"}, {"d": "鮭串", "s": "焼き場"}, {"d": "いか串", "s": "焼き場"}, {"d": "和牛 大 / 小", "s": "焼き場・キッチン"}, {"d": "とりてり 単 / とり塩 単", "s": "焼き場"}, {"d": "かば焼き Full / Half", "s": "焼き場"}, {"d": "さば塩", "s": "焼き場"}, {"d": "さけてり 単", "s": "焼き場"}, {"d": "特ずし", "s": "板場"}, {"d": "すし上 Full / Half", "s": "板場"}, {"d": "すし並", "s": "板場"}, {"d": "刺し盛り", "s": "板場"}, {"d": "３種刺し", "s": "板場"}, {"d": "２種刺し", "s": "板場"}, {"d": "トロ刺し", "s": "板場"}, {"d": "中トロ刺し", "s": "板場"}, {"d": "マグロ刺し", "s": "板場"}, {"d": "鮭刺し", "s": "板場"}, {"d": "まぐろN", "s": "板場"}, {"d": "中トロN", "s": "板場"}, {"d": "トロN", "s": "板場"}, {"d": "炙りトロN", "s": "板場"}, {"d": "さけN", "s": "板場"}, {"d": "トロサーモンN", "s": "板場"}, {"d": "炙り鮭N", "s": "板場"}, {"d": "炙りトロサーモンN", "s": "板場"}, {"d": "鮭いくら軍", "s": "板場"}, {"d": "うなぎN", "s": "板場"}, {"d": "うに軍", "s": "板場"}, {"d": "えびN", "s": "板場"}, {"d": "大海老N", "s": "板場"}, {"d": "はまちN", "s": "板場"}, {"d": "炙り帆立N", "s": "板場"}, {"d": "しめ鯖N", "s": "板場"}, {"d": "玉子N", "s": "板場"}, {"d": "炙りトロサーモンいくらR", "s": "板場"}, {"d": "さば棒", "s": "板場"}, {"d": "カリフォR", "s": "板場"}, {"d": "鮭アボR", "s": "板場"}, {"d": "スパツナR", "s": "板場"}, {"d": "スパ鮭R", "s": "板場"}, {"d": "てっかR", "s": "板場"}, {"d": "さけR", "s": "板場"}, {"d": "ネギトロR", "s": "板場"}, {"d": "トロサーモンR", "s": "板場"}, {"d": "うなたまR", "s": "板場"}, {"d": "かっぱR", "s": "板場"}, {"d": "アボR", "s": "板場"}, {"d": "かんぴょうR", "s": "板場"}, {"d": "おしんこR", "s": "板場"}, {"d": "梅きゅうR", "s": "板場"}, {"d": "納豆R", "s": "板場"}, {"d": "串丼", "s": "焼き場・キッチン"}, {"d": "牛カルビ丼", "s": "焼き場・キッチン"}, {"d": "うな丼 Full / Half", "s": "焼き場・キッチン"}, {"d": "さけ丼", "s": "板場・キッチン"}, {"d": "海老天丼", "s": "キッチン"}, {"d": "ベジ天丼", "s": "キッチン"}, {"d": "カツカレー", "s": "キッチン"}, {"d": "カラシビ", "s": "キッチン"}, {"d": "とんこつ", "s": "キッチン"}, {"d": "オムソバ", "s": "キッチン"}, {"d": "ベジオムソバ", "s": "キッチン"}, {"d": "味噌ラーメン", "s": "キッチン"}, {"d": "辛味噌ラーメン", "s": "キッチン"}, {"d": "海老天うどん", "s": "キッチン"}, {"d": "かき揚げうどん", "s": "キッチン"}, {"d": "デザート盛り", "s": "キッチン"}, {"d": "黒ゴマ", "s": "キッチン"}, {"d": "くろみつ", "s": "キッチン"}, {"d": "だんご", "s": "キッチン"}, {"d": "苺大福", "s": "キッチン"}, {"d": "抹茶アイス", "s": "キッチン"}, {"d": "マンゴー", "s": "キッチン"}, {"d": "バニラアイス", "s": "キッチン"}, {"d": "チラシセット", "s": "板場・キッチン"}, {"d": "さば棒セット", "s": "板場・キッチン"}, {"d": "さけ棒セット", "s": "板場・キッチン"}, {"d": "ミクス棒セット", "s": "板場・キッチン"}, {"d": "特ずしそばセット", "s": "板場・キッチン"}, {"d": "すし上Fullそばセット", "s": "板場・キッチン"}, {"d": "すし上Halfそばセット", "s": "板場・キッチン"}, {"d": "すし並そばセット", "s": "板場・キッチン"}, {"d": "カレーラーメン", "s": "キッチン"}, {"d": "親子丼", "s": "キッチン"}, {"d": "4種セット", "s": "焼き場"}, {"d": "もつにら（単）", "s": "キッチン"}];
 
         // Wasabi Dataset sourced from sabi.xlsx (true = with wasabi, false = without wasabi)
         const WASABI_DATASET = [
@@ -520,6 +607,13 @@
             { d: "さけ丼", hasWasabi: true }
         ];
 
+        // Dynamically build file lists based on range configuration
+        const IMAGE_MANIFEST = {
+            all_menu: Array.from({ length: 117 }, (_, i) => `all_menu_${String(i + 1).padStart(3, '0')}.webp`),
+            kushis: Array.from({ length: 6 }, (_, i) => `kushi_${String(i + 1).padStart(3, '0')}.webp`),
+            sushis: Array.from({ length: 6 }, (_, i) => `sushi_${String(i + 1).padStart(3, '0')}.webp`)
+        };
+
         // Japanese Voice Pronunciation Counter Map
         const COUNTER_JA = ["", "一丁", "二丁", "三丁", "四丁", "五丁", "六丁", "七丁", "八丁", "九丁", "十丁"];
 
@@ -546,30 +640,62 @@
             document.getElementById('tab-practice').classList.add('hidden');
             document.getElementById('tab-wasabi').classList.add('hidden');
             document.getElementById('tab-quiz').classList.add('hidden');
+            document.getElementById('tab-gallery').classList.add('hidden');
             document.getElementById('tab-dictionary').classList.add('hidden');
 
             document.getElementById('nav-practice').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
             document.getElementById('nav-wasabi').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
             document.getElementById('nav-quiz').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
+            document.getElementById('nav-gallery').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
             document.getElementById('nav-dictionary').className = "px-3 py-1.5 rounded-md font-medium transition-all inactive-tab";
 
             document.getElementById('tab-' + tabId).classList.remove('hidden');
             document.getElementById('nav-' + tabId).className = "px-3 py-1.5 rounded-md font-medium transition-all active-tab";
         }
 
-        // --- DRILL / PRACTICE LOGIC ---
+        // --- GALLERY MODE LOGIC ---
+        function displayRandomImage() {
+            const selectedFolders = [];
+            if (document.getElementById('chk-all_menu').checked) selectedFolders.push('all_menu');
+            if (document.getElementById('chk-kushis').checked) selectedFolders.push('kushis');
+            if (document.getElementById('chk-sushis').checked) selectedFolders.push('sushis');
+
+            const imgEl = document.getElementById('gallery-img');
+            const placeholderEl = document.getElementById('gallery-placeholder');
+            const infoEl = document.getElementById('gallery-info');
+
+            if (selectedFolders.length === 0) {
+                imgEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+                placeholderEl.innerText = "少なくとも1つのフォルダを選択してください。";
+                infoEl.innerText = "選択フォルダ: なし";
+                return;
+            }
+
+            const folder = selectedFolders[Math.floor(Math.random() * selectedFolders.length)];
+            const fileList = IMAGE_MANIFEST[folder];
+            const file = fileList[Math.floor(Math.random() * fileList.length)];
+
+            imgEl.src = `${folder}/${file}`;
+            imgEl.onerror = () => {
+                placeholderEl.innerText = `画像を読み込めませんでした: ${folder}/${file}`;
+                placeholderEl.classList.remove('hidden');
+                imgEl.classList.add('hidden');
+            };
+            imgEl.onload = () => {
+                placeholderEl.classList.add('hidden');
+                imgEl.classList.remove('hidden');
+            };
+        }
+
         // --- DRILL / PRACTICE LOGIC ---
         function generateNewOrder() {
             const count = parseInt(document.getElementById('item-count').value, 10);
             const filter = document.getElementById('station-filter').value;
             
-            // デザートのメニュー名リスト
             const desserts = ["デザート盛り", "黒ゴマ", "くろみつ", "だんご", "苺大福", "抹茶アイス", "マンゴー", "バニラアイス"];
-
-            // デザートを除外したデータプールを作成
             let pool = DATASET.filter(item => !desserts.includes(item.d));
 
-            // ポジション絞り込みの適用
             if (filter === '焼き場') pool = pool.filter(i => i.s.includes('焼き場'));
             else if (filter === '板場') pool = pool.filter(i => i.s.includes('板場'));
             else if (filter === 'キッチン') pool = pool.filter(i => i.s.includes('キッチン'));
@@ -586,7 +712,7 @@
                 if (existing) {
                     existing.qty += qty;
                 } else {
-                    currentOrder.push({ ...randomItem, qty });
+                    currentOrder.push({ ...randomItem, qty, tag: null });
                 }
             }
 
@@ -600,15 +726,63 @@
             resetTimer();
         }
 
+        // --- DRAG AND DROP TAG HANDLERS ---
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.getAttribute('data-tag'));
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drop-target-hover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drop-target-hover');
+        }
+
+        function handleDrop(e, index) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drop-target-hover');
+            const tag = e.dataTransfer.getData('text/plain');
+            if (tag && currentOrder[index]) {
+                currentOrder[index].tag = tag;
+                renderHandy();
+            }
+        }
+
+        function clearAllTags() {
+            currentOrder.forEach(item => item.tag = null);
+            renderHandy();
+        }
+
         function renderHandy() {
             const listEl = document.getElementById('handy-items-list');
             listEl.innerHTML = '';
             
-            currentOrder.forEach((item) => {
+            currentOrder.forEach((item, index) => {
                 const li = document.createElement('li');
-                li.className = "flex justify-between items-center p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm";
+                li.className = "flex justify-between items-center p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm transition-all";
+                li.setAttribute('ondragover', 'handleDragOver(event)');
+                li.setAttribute('ondragleave', 'handleDragLeave(event)');
+                li.setAttribute('ondrop', `handleDrop(event, ${index})`);
+                
+                let tagBadge = "";
+                if (item.tag) {
+                    let badgeColor = "bg-amber-100 text-amber-900 border-amber-300";
+                    if (item.tag === "声") badgeColor = "bg-rose-100 text-rose-900 border-rose-300";
+                    if (item.tag === "板声") badgeColor = "bg-cyan-100 text-cyan-900 border-cyan-300";
+                    if (item.tag === "出してOK!") badgeColor = "bg-emerald-100 text-emerald-900 border-emerald-300";
+                    
+                    tagBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${badgeColor}">${item.tag}</span>`;
+                } else {
+                    tagBadge = `<span class="text-[10px] text-slate-300 border border-dashed border-slate-300 px-1 rounded">タグドロップ可</span>`;
+                }
+
                 li.innerHTML = `
-                    <span class="font-bold text-slate-800">${item.d}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-800">${item.d}</span>
+                        ${tagBadge}
+                    </div>
                     <span class="font-mono font-bold text-slate-900 bg-white border border-slate-300 px-2 py-0.5 rounded text-xs">x${item.qty}</span>
                 `;
                 listEl.appendChild(li);
@@ -708,7 +882,11 @@
             let phrase = "はい！ ";
             currentOrder.forEach((item) => {
                 const counterText = COUNTER_JA[item.qty] || (item.qty + "つ");
-                phrase += `${item.d} ${counterText}、 `;
+                if (item.tag === "前") {
+                    phrase += `前に、${item.d} ${counterText}、 `;
+                } else {
+                    phrase += `${item.d} ${counterText}、 `;
+                }
             });
             phrase += "おねがいします！";
 
